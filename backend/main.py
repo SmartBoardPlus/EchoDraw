@@ -1,33 +1,43 @@
-from fastapi import FastAPI, HTTPException, Header
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+# backend/main.py
+import os
+import uuid
+from pathlib import Path
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from supabase import create_client, Client
-import os, base64, uuid, random
 
-# load .env
-load_dotenv()
+# --- load env from backend/.env regardless of CWD ---
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
-BUCKET = os.environ.get("SUPABASE_BUCKET", "answer_previews")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in backend/.env")
 
+# --- single global Supabase client ---
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-app = FastAPI(title="AnswerBoard API")
-
-# dev CORS: allow Next.js localhost
+app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
-# ---------- Models ----------
+# --- health ---
+@app.get("/api/health")
+def health():
+    return {"ok": True}
+
+# --- models ---
 class CreateSessionReq(BaseModel):
-    teacher_id: str  # for now we pass this directly; later replace with Auth0-sub
+    teacher_id: str
     question_text: str
 
 class SubmitAnswerReq(BaseModel):
@@ -36,72 +46,55 @@ class SubmitAnswerReq(BaseModel):
     preview_png_base64: str | None = None
     student_id: str | None = None
 
-# ---------- Health ----------
-@app.get("/api/health")
-def health():
-    return {"ok": True}
+# --- sessions ---
+class CreateSessionReq(BaseModel):
+    teacher_id: str
+    question_text: str
 
-# ---------- Sessions ----------
 @app.post("/api/sessions")
 def create_session(req: CreateSessionReq):
-    res = supabase.table("sessions").insert({
-        "teacher_id": req.teacher_id,
-        "question_text": req.question_text
-    }).execute()
-    if not res.data:
-        raise HTTPException(500, "Insert failed")
-    return res.data[0]
+    import uuid, traceback
+    session_id = str(uuid.uuid4())
+    try:
+        res = supabase.table("sessions").insert({
+            "session_id": session_id,
+            "teacher_id": req.teacher_id,
+            "question_text": req.question_text
+        }).execute()
 
-@app.get("/api/sessions/{session_id}")
-def get_session(session_id: str):
-    res = supabase.table("sessions").select("*").eq("session_id", session_id).single().execute()
-    if not res.data:
-        raise HTTPException(404, "Not found")
-    return res.data
+        if getattr(res, "error", None):
+            return JSONResponse({"ok": False, "where": "insert", "error": str(res.error)}, status_code=500)
 
-@app.get("/api/sessions/{session_id}/answers")
-def list_answers(session_id: str, preview: bool = True):
-    res = supabase.table("answers").select("*").eq("session_id", session_id).order("created_at", desc=True).execute()
-    rows = res.data or []
-    if preview:
-        return [{"answer_id": r["answer_id"], "preview_url": r["preview_url"]} for r in rows]
-    return [{"answer_id": r["answer_id"], "board_json": r["board_json"], "preview_url": r["preview_url"]} for r in rows]
+        return JSONResponse({"ok": True, "session_id": session_id}, status_code=200)
 
-@app.get("/api/sessions/{session_id}/shuffled")
-def shuffled(session_id: str):
-    res = supabase.table("answers").select("answer_id").eq("session_id", session_id).execute()
-    ids = [r["answer_id"] for r in (res.data or [])]
-    random.shuffle(ids)
-    return {"order": ids}
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse({"ok": False, "where": "exception", "error": f"{type(e).__name__}: {e}"}, status_code=500)
 
-# ---------- Answers ----------
-@app.get("/api/answers/{answer_id}")
-def get_answer(answer_id: str):
-    res = supabase.table("answers").select("*").eq("answer_id", answer_id).single().execute()
-    if not res.data:
-        raise HTTPException(404, "Not found")
-    return {"board_json": res.data["board_json"], "preview_url": res.data["preview_url"]}
-
+# --- answers (minimal; no storage yet) ---
 @app.post("/api/answers")
 def submit_answer(req: SubmitAnswerReq):
-    # make id now so we can name the file path
+    # make sure the session exists
+    ses = supabase.table("sessions").select("session_id").eq("session_id", req.session_id).execute()
+    if not getattr(ses, "data", None):
+        return JSONResponse({"ok": False, "error": "Invalid session_id"}, status_code=400)
+
     answer_id = str(uuid.uuid4())
-    # insert first
-    ins = supabase.table("answers").insert({
+    supabase.table("answers").insert({
         "answer_id": answer_id,
         "session_id": req.session_id,
         "board_json": req.board_json,
         "student_id": req.student_id
     }).execute()
-    if not ins.data:
-        raise HTTPException(500, "Answer insert failed")
 
-    preview_url = None
-    if req.preview_png_base64:
-        raw = base64.b64decode(req.preview_png_base64)
-        path = f"{req.session_id}/{answer_id}.png"
-        supabase.storage.from_(BUCKET).upload(path, raw, {"content-type": "image/png", "upsert": "true"})
-        preview_url = supabase.storage.from_(BUCKET).get_public_url(path)
-        supabase.table("answers").update({"preview_url": preview_url}).eq("answer_id", answer_id).execute()
+    # ALWAYS return JSON (never None)
+    return JSONResponse({"ok": True, "answer_id": answer_id, "preview_url": None}, status_code=200)
 
-    return {"answer_id": answer_id, "preview_url": preview_url}
+# --- probes for debugging ---
+@app.get("/api/answers/_probe")
+def answers_probe():
+    return JSONResponse({"probe": "answers-endpoint-v2"}, status_code=200)
+
+@app.get("/api/routes")
+def list_routes():
+    return [r.path for r in app.router.routes]
