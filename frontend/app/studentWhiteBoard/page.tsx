@@ -203,19 +203,6 @@ const Page: NextPage = () => {
       </div>
 
       {/* Question image (top) */}
-      <div className="card header">
-        <img
-          src="/question.png"
-          alt="Question"
-          className="question-img"
-          onError={(e) => {
-            const target = e.currentTarget as HTMLImageElement;
-            target.alt = "Question image not found at /public/question.png (placeholder shown)";
-            target.style.opacity = "0.6";
-          }}
-        />
-      </div>
-
       {/* Excalidraw whiteboard (middle) — default toolbar shows pencil + text + shapes */}
       <div className="card excalidraw-wrap" aria-label="Whiteboard">
         <Excalidraw
