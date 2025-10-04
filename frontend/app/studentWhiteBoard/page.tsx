@@ -181,19 +181,18 @@ const Page: NextPage = () => {
 
         .question-img { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
 
-        .timer-badge { position: fixed; top: 12px; right: 12px; z-index: 30; display: inline-flex; align-items: center; justify-content: center; min-width: 64px; padding: 6px 10px; border-radius: 999px; font-weight: 700; letter-spacing: 0.02em; border: 1px solid var(--border); background: var(--primary); color: var(--bg); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .timer-badge { position: fixed; top: 24px; right: 24px; z-index: 30; display: inline-flex; align-items: center; justify-content: center; min-width: 120px; padding: 6px 10px; border-radius: 999px; font-weight: 700; letter-spacing: 0.02em; border: 1px solid var(--border); background: var(--primary); color: var(--text); box-shadow: 0 2px 10px rgba(0,0,0,0.08); font-size: 25px }
         .timer-danger { background: var(--danger); }
 
-        .excalidraw-wrap { height: 60vh; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .excalidraw-wrap { height: 97vh; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 
-        .submit-bar { display: flex; justify-content: flex-end; padding: 8px; }
-        .btn { border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: var(--primary); color: var(--bg); font-weight: 600; cursor: pointer; transition: transform .02s ease, filter .15s ease; user-select: none; }
+        .submit-bar { display: flex; justify-content: flex-end; padding: 8px;position: absolute; bottom: 24px; right: 20px; z-index: 30}
+        .btn { border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: var(--primary); color: var(--text); font-weight: 600; cursor: pointer; transition: transform .02s ease, filter .15s ease; user-select: none; }
         .btn:hover { filter: brightness(0.95); }
         .btn:active { transform: translateY(1px); }
-        .btn[disabled], .btn[aria-disabled="true"] { opacity: .6; cursor: not-allowed; }
+        .btn[disabled], .btn[aria-disabled="true"] {filter: brightness(80%) cursor: not-allowed; }
 
-        .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 12px; z-index: 40; }
-        .toast .pill { background: var(--ok); color: var(--bg); border-radius: 999px; padding: 4px 8px; font-size: 12px; font-weight: 700; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--surface); color: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 12px; z-index: 40; padding: 7px 10px 7px 20px; }
         .toast button { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px 8px; cursor: pointer; }
       `}</style>
 
@@ -230,8 +229,7 @@ const Page: NextPage = () => {
       {/* Confirmation toast/banner */}
       {showToast && (
         <div className="toast" role="status" aria-live="polite">
-          <span className="pill">Answer submitted</span>
-          <span>Vector JSON logged to console. Editing remains locked.</span>
+          <span>Answer submitted</span>
           <button onClick={() => setShowToast(false)} aria-label="Close notification">
             Close
           </button>
