@@ -24,6 +24,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTeacher, setIsTeacher] = useState(false); // ⬅️ toggle state
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -38,8 +39,13 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+
+      // Redirect based on role toggle
+      if (isTeacher) {
+        router.push("/protected"); // Teacher destination (adjust as needed)
+      } else {
+        router.push("/student"); // Student destination (adjust as needed)
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -53,7 +59,7 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email below to log in to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,6 +76,7 @@ export function LoginForm({
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
+
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
@@ -88,11 +95,31 @@ export function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+
+              {/* Teacher toggle */}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="teacher">Teacher</Label>
+                <input
+                  id="teacher"
+                  type="checkbox"
+                  className="h-4 w-4 accent-current"
+                  checked={isTeacher}
+                  onChange={(e) => setIsTeacher(e.target.checked)}
+                  aria-label="Login as teacher"
+                />
+              </div>
+
               {error && <p className="text-sm text-red-500">{error}</p>}
+
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading
+                  ? "Logging in..."
+                  : isTeacher
+                  ? "Teacher Login"
+                  : "Student Login"}
               </Button>
             </div>
+
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link
