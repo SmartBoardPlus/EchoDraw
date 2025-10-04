@@ -12,6 +12,7 @@ import { useSearchParams } from "next/navigation";
 // ✅ Official stylesheet (as per docs). Ensure you installed: `npm i @excalidraw/excalidraw`
 // This provides the full Excalidraw toolbar (pencil, text, shapes, etc.)
 import "@excalidraw/excalidraw/index.css";
+import { useRouter } from "next/navigation";
 
 /**
  * Minimal, single-file page that:
@@ -74,35 +75,26 @@ function paletteToCSSVars(p: { p1?: string; p2?: string; p3?: string; p4?: strin
         --border: ${p3};
         --surface: ${p2};
       }
-    
   `;
 }
 
 // ————— Page —————
 const Page: NextPage = () => {
   // Timer: default 120s; override via ?t=SECONDS
-  //Timed : defualt true: override via ?Timed=false
   const searchParams = useSearchParams();
-  const timed = useMemo(() => {
-    const timedParam = searchParams.get("timed");
-    return timedParam === "false" ? false : true;
-  }, [searchParams]);
-  const totalSeconds = useMemo(() => {
-    const tParam = searchParams.get("t");
+  const sessionId: number = useMemo<number>(() => {
+    const tParam = searchParams.get("QuestionId");
     const parsed = tParam ? parseInt(tParam, 10) : NaN;
-    
-    return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 24 * 60 * 60) : 120;
+    return isNaN(parsed) ? -1 : parsed;
   }, [searchParams]);
-  
-  const [remaining, setRemaining] = useState<number>(totalSeconds);
-
+  console.log(sessionId)
   // Excalidraw scene state
   const [elements, setElements] = useState<any[]>([]);
   const [appState, setAppState] = useState<any>({});
   const [files, setFiles] = useState<Record<string, any>>({});
   const [submitted, setSubmitted] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
+  const router = useRouter();
   // Keep latest scene for submit
   const sceneRef = useRef<{ elements: any[]; appState: any; files: Record<string, any> } | null>(null);
 
@@ -117,6 +109,7 @@ const Page: NextPage = () => {
 
   // Submit logic: log vector JSON and lock board
   const doSubmit = useCallback(() => {
+    
     if (submitted) return;
     const snapshot = sceneRef.current ?? { elements, appState, files };
     const payload = {
@@ -128,39 +121,17 @@ const Page: NextPage = () => {
     try {
       // eslint-disable-next-line no-console
       console.log("SUBMISSION_PAYLOAD:", payload);
+     
       setSubmitted(true); // lock
       setShowToast(true); // toast
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to submit:", err);
+    }finally{
+       router.push("/questions")
     }
   }, [elements, appState, files, submitted]);
 
-  // Countdown
-  if(timed){
-    useEffect(() => {
-      if (submitted) return;
-      if (remaining <= 0 && timed) {
-        doSubmit();
-        return;
-      }
-      const id = setInterval(() => setRemaining((s) => (s > 0 ? s - 1 : 0)), 1000);
-      return () => clearInterval(id);
-  }, [remaining, submitted, doSubmit]);
-  }
-  
-
-
-  // mm:ss
-  const mmss = useMemo(() => {
-    const m = Math.floor(remaining / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = Math.floor(remaining % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${m}:${s}`;
-  }, [remaining]);
 
   // CSS vars from palette
   const cssVars = useMemo(() => paletteToCSSVars(parsePalette(PALETTE_MD)), []);
@@ -196,10 +167,6 @@ const Page: NextPage = () => {
       `}</style>
 
       {/* Timer */}
-      {timed &&(<div className={`timer-badge ${remaining <= 10 ? "timer-danger" : ""}`} aria-live="polite" aria-atomic="true">
-        {mmss}
-      </div>)}
-      
 
       {/* Question image (top) */}
       {/* Excalidraw whiteboard (middle) — default toolbar shows pencil + text + shapes */}
@@ -222,14 +189,14 @@ const Page: NextPage = () => {
           aria-label={submitted ? "Already submitted" : "Submit answer (S)"}
           title="Submit answer (S)"
         >
-          {submitted ? "Submitted" : "Submit"}
+          {submitted ? "Question Saved" : "Save"}
         </button>
       </div>
 
       {/* Confirmation toast/banner */}
       {showToast && (
         <div className="toast" role="status" aria-live="polite">
-          <span>Answer submitted</span>
+          <span>Question Saved</span>
           <button onClick={() => setShowToast(false)} aria-label="Close notification">
             Close
           </button>
