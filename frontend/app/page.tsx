@@ -176,7 +176,7 @@ function HomePageGitHubLink() {
           I’m a Student – Join Class
         </Link>
         <Link
-          href="/teacherWhiteBoard"
+          href="/lessons"
           className="rounded-lg border border-zinc-300 px-4 py-2 hover:bg-zinc-100 transition"
         >
           I’m a Teacher – Start Session
