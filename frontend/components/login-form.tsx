@@ -39,10 +39,9 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-
       // Redirect based on role toggle
       if (isTeacher) {
-        router.push("/protected"); // Teacher destination (adjust as needed)
+        router.push("/lesson"); // Teacher destination (adjust as needed)
       } else {
         router.push("/student"); // Student destination (adjust as needed)
       }
