@@ -115,12 +115,16 @@ def create_teacher(req: CreateTeacherReq):
 @app.get("/api/teachers/by_email")
 def get_teacher_by_email(email: str):
     """
-    Lookup a teacher by email and return teacher_id.
+    Exact match lookup by email (no normalization).
     Usage: /api/teachers/by_email?email=demo@example.com
     """
-    r = supabase.table("teachers") \
-        .select("teacher_id, display_name, email, created_at") \
-        .eq("email", norm).execute()
+    r = (
+        supabase.table("teachers")
+        .select("teacher_id, display_name, email, created_at")
+        .eq("email", email)          # ← exact, case-sensitive match
+        .limit(1)
+        .execute()
+    )
 
     rows = r.data or []
     if not rows:
@@ -128,6 +132,7 @@ def get_teacher_by_email(email: str):
 
     t = rows[0]
     return {"ok": True, "teacher_id": t["teacher_id"], "teacher": t}
+
 
 # ------------------------------
 # Sessions
