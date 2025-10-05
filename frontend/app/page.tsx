@@ -3,6 +3,7 @@ import lectureImage from "./images/lecture.png";
 import calculusImage from "./images/calculus.png";
 import sessionImage from "./images/session.png";
 import placeholderPFP from "./images/placeholder-pfp.png";
+import logoImage from "./images/hack-the-valley-echo-draw.png";
 
 export default function Home() {
   return (
@@ -55,19 +56,19 @@ export default function Home() {
         <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
           <main className="flex-1 flex flex-col gap-6 px-2">
             <HomePageCrewMember
-              name="George"
+              name="George Postica"
               description="Description about George"
             />
             <HomePageCrewMember
-              name="Ethan"
+              name="Ethan Diep"
               description="Description about Ethan"
             />
             <HomePageCrewMember
-              name="Kaleel"
+              name="Kaleel Maharaj"
               description="Description about Kaleel"
             />
             <HomePageCrewMember
-              name="Minh"
+              name="Nhat Minh Phan"
               description="Description about Minh"
             />
           </main>
@@ -103,8 +104,9 @@ export default function Home() {
 function HomePageIntroduction() {
   return (
     <div className="homepage-introduction">
-      <p className="text-3xl lg:text-4xl !leading-tight mx-[100px] max-w-xl text-center">
-        MediumBoard, unmatched by Mentimeter
+      <img src={logoImage.src} alt="Logo of EchoDraw" id="brand-logo"></img>
+      <p className="text-3xl lg:text-3xl !leading-tight mx-[100px] max-w-xl text-center">
+        <i>Drawings Draw Listeners</i>
       </p>
     </div>
   );
