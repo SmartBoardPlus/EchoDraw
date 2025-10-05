@@ -33,7 +33,7 @@ export default function CardsPage() {
   // const [loading, setIsLoading] = useState(false);
   //const router=useRouter();
   const addCard = () => {
-    fetch('http://localhost:8000/api/questions', { method: 'POST' , headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id:sessionID,question_text:"" }) })
+    fetch('http://localhost:8000/api/questions', { method: 'POST' , headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id:sessionID,question_text:" " }) })
       .then(response => {
         if(response.ok){
           return response.json();
@@ -66,7 +66,7 @@ export default function CardsPage() {
           <Link
             key={card.id}
             className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300"
-            href={`/teacherWhiteBoard?QuestionId=${card.id}`}
+            href={`/teacherWhiteBoard?QuestionId=${card.id}&SessionId=${sessionID}`}
           >
             <h2 className="text-xl font-semibold mb-2">{`Question ${index+1}`}</h2>
           </Link>
