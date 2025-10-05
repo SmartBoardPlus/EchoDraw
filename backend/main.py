@@ -89,8 +89,9 @@ class UpdateSessionName(BaseModel):      # CHANGED (was UpdateSessionText/name)
     session_name: str = Field(min_length=1, max_length=255)
 
 class UpdateQuestionText(BaseModel):
-    # keep simple text update; we'll write both question_body and question_text
+    # keep simple text update; we'll write both questi  on_body and question_text
     question_text: str = Field(min_length=1, max_length=5000)
+    question_body: Optional[dict] = None
 
 # ------------------------------
 # Helpers
@@ -300,7 +301,7 @@ def update_question_text(question_id: str, req: UpdateQuestionText):
     try:
         payload = {
             "question_text": req.question_text,             # legacy col
-            "question_body": {"text": req.question_text},   # jsonb col
+            "question_body": req.question_body,   # jsonb col
         }
         res = (
             supabase.table("questions")
@@ -379,7 +380,7 @@ def list_questions(session_id: str):
     )
     rows = r.data or []
     return [
-        {"question_id": x["question_id"], "question_text": _qstring(x), "created_at": x["created_at"]}
+        {"question_id": x["question_id"], "question_text": _qstring(x), "created_at": x["created_at"], "question_body": x["question_body"]}
         for x in rows
     ]
 
