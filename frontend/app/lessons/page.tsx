@@ -216,6 +216,9 @@ const LessonRow: React.FC<LessonRowProps> = ({
               placeholder="Lesson name"
               autoFocus
             />
+            <Link className="px-3 py-1 rounded bg-[#34a8a2] text-black text-sm" href={`/teacherview?SessionId=${session.sessionID}`}>
+              Start
+            </Link>
             <button
               className="px-3 py-1 rounded bg-[#34a8a2] text-white text-sm"
               onClick={onSaveEdit}
@@ -242,6 +245,9 @@ const LessonRow: React.FC<LessonRowProps> = ({
       {/* Right side: action buttons inline with the name */}
       {!isEditing && (
         <div className="flex items-center gap-2">
+          <Link className="px-3 py-1 rounded bg-[#34a8a2] text-black text-sm" href={`/teacherview?SessionId=${session.sessionID}`}>
+              Start
+            </Link>
           <BinaryStateButton
             title="Edit"
             alt="Edit lesson"

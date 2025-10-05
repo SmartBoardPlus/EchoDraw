@@ -431,7 +431,7 @@ def answers_by_question(session_id: str, include_json: bool = True):
 def list_answers_for_question(question_id: str):
     r = (
         supabase.table("answers")
-        .select("answer_id,preview_url,created_at")
+        .select("answer_id,preview_url,created_at,board_json")
         .eq("question_id", question_id)
         .order("created_at")
         .execute()

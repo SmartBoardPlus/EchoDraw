@@ -173,7 +173,7 @@ const Page: NextPage = () => {
 
   return (
     <div className="page-root">
-      <style jsx global>{`${cssVars}`}</style>
+      <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: cssVars }} />
 
       {/* Timer */}
       {timed && (
