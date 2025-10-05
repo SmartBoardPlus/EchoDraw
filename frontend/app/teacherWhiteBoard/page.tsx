@@ -82,12 +82,11 @@ function paletteToCSSVars(p: { p1?: string; p2?: string; p3?: string; p4?: strin
 const Page: NextPage = () => {
   // Timer: default 120s; override via ?t=SECONDS
   const searchParams = useSearchParams();
-  const sessionId: number = useMemo<number>(() => {
+  const sessionId= useMemo<string>(() => {
     const tParam = searchParams.get("QuestionId");
-    const parsed = tParam ? parseInt(tParam, 10) : NaN;
-    return isNaN(parsed) ? -1 : parsed;
+    const parsed = tParam ? tParam : "-1";
+    return parsed;
   }, [searchParams]);
-  console.log(sessionId)
   // Excalidraw scene state
   const [elements, setElements] = useState<any[]>([]);
   const [appState, setAppState] = useState<any>({});
@@ -121,14 +120,14 @@ const Page: NextPage = () => {
     try {
       // eslint-disable-next-line no-console
       console.log("SUBMISSION_PAYLOAD:", payload);
-     
+      // Here, instead of console.log, you'd POST `payload` to your backend API.
       setSubmitted(true); // lock
       setShowToast(true); // toast
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to submit:", err);
     }finally{
-       router.push("/questions")
+      router.push("/questions")
     }
   }, [elements, appState, files, submitted]);
 

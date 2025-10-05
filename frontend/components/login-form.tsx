@@ -32,7 +32,7 @@ export function LoginForm({
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -41,7 +41,10 @@ export function LoginForm({
       if (error) throw error;
       // Redirect based on role toggle
       if (isTeacher) {
-        router.push("/lesson"); // Teacher destination (adjust as needed)
+        fetch(`http://localhost:8000/api/teachers/by_email?email=${email}`, { method: 'GET' , headers: { 'Content-Type': 'application/json' }}).then(response => response.json()).then(data => {
+          router.push(`/lessons?TeacherId=${data.teacher_id}`); // Teacher destination (adjust as needed)
+        })
+        // Teacher destination (adjust as needed)
       } else {
         router.push("/student"); // Student destination (adjust as needed)
       }

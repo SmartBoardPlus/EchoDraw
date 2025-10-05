@@ -8,7 +8,7 @@ import React, { use, useCallback, useEffect, useMemo, useRef, useState } from "r
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 // ✅ Official stylesheet (as per docs). Ensure you installed: `npm i @excalidraw/excalidraw`
 // This provides the full Excalidraw toolbar (pencil, text, shapes, etc.)
 import "@excalidraw/excalidraw/index.css";
@@ -33,16 +33,13 @@ const PALETTE_MD = `{
 "palette-4": "#34A8A2",
 "palette-5": "#007B80"
 }`;
-
+type question={
+  question_id:string;
+  question_text:string;
+  created_at:string;
+}
 // Dynamic import to avoid SSR issues with the canvas
-const Excalidraw = dynamic(
-  async () => {
-    const mod: any = await import("@excalidraw/excalidraw");
-    // The docs export named `Excalidraw`; keep fallbacks for safety across versions
-    return mod.Excalidraw || mod.default || (() => <div>Failed to load Excalidraw</div>);
-  },
-  { ssr: false, loading: () => <div style={{ padding: 24 }}>Loading whiteboard…</div> }
-);
+// Duplicate Excalidraw declaration removed
 
 // ————— Palette parsing → CSS variables —————
 function parsePalette(md: string) {
@@ -77,12 +74,22 @@ function paletteToCSSVars(p: { p1?: string; p2?: string; p3?: string; p4?: strin
     
   `;
 }
-
+const Excalidraw = dynamic<any>(
+  async () => {
+    const mod = await import("@excalidraw/excalidraw");
+    return mod.Excalidraw || (() => <div>Failed to load Excalidraw</div>);
+  },
+  { ssr: false, loading: () => <div style={{ padding: 24 }}>Loading whiteboard…</div> }
+);
 // ————— Page —————
 const Page: NextPage = () => {
   // Timer: default 120s; override via ?t=SECONDS
   //Timed : defualt true: override via ?Timed=false
+  
+  const [questions,setQuestions]=useState<question[]>([]);
+  const [qIndex,setQIndex]=useState(0);
   const searchParams = useSearchParams();
+  const excalAPIRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const timed = useMemo(() => {
     const timedParam = searchParams.get("timed");
     return timedParam === "false" ? false : true;
@@ -93,10 +100,16 @@ const Page: NextPage = () => {
     
     return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 24 * 60 * 60) : 120;
   }, [searchParams]);
-  const answerId=useMemo(() => {
-    
+  const session_Id=useMemo(() => {
+    const tParam = searchParams.get("SessionId");
+    const parsed = tParam ? tParam : "-1";
+    fetch("http://localhost:8000/api/sessions/"+parsed+"/questions", { method: 'GET' , headers: { 'Content-Type': 'application/json' } }
+    ).then(response => response.json()).then(data => {
+      setQuestions(data);
+      setQIndex(0); 
+    });
+    return parsed;
   }, []);
-  
   const [remaining, setRemaining] = useState<number>(totalSeconds);
 
   // Excalidraw scene state
@@ -117,7 +130,16 @@ const Page: NextPage = () => {
     setFiles(f);
     sceneRef.current = { elements: els, appState: state, files: f };
   }, []);
+  useEffect(() => {
+  if (!excalAPIRef.current) return;
+  // e.g., load from your questions[qIndex].scene
+  const  elements:any[]= JSON.parse(questions[qIndex]?.question_text); // {elements, appState, files}
 
+  excalAPIRef.current.updateScene({
+    elements: elements ?? [],
+    appState:  {},
+  });
+}, [qIndex, questions]);
   // Submit logic: log vector JSON and lock board
   const doSubmit = useCallback(() => {
     if (submitted) return;
@@ -208,7 +230,8 @@ const Page: NextPage = () => {
       {/* Excalidraw whiteboard (middle) — default toolbar shows pencil + text + shapes */}
       <div className="card excalidraw-wrap" aria-label="Whiteboard">
         <Excalidraw
-          // @ts-ignore — API types vary across versions
+          onMount={(api: ExcalidrawImperativeAPI)=>excalAPIRef.current=api}
+          
           onChange={handleChange}
           viewModeEnabled={submitted}
           gridModeEnabled={false}
