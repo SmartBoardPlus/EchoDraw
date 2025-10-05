@@ -110,6 +110,24 @@ def create_teacher(req: CreateTeacherReq):
         return {"ok": True, "teacher_id": teacher_id}
     except Exception as e:
         return JSONResponse({"ok": False, "error": f"{type(e).__name__}: {e}"}, status_code=500)
+    
+# ---- TEACHERS: look up by email ----
+@app.get("/api/teachers/by_email")
+def get_teacher_by_email(email: str):
+    """
+    Lookup a teacher by email and return teacher_id.
+    Usage: /api/teachers/by_email?email=demo@example.com
+    """
+    r = supabase.table("teachers") \
+        .select("teacher_id, display_name, email, created_at") \
+        .eq("email", norm).execute()
+
+    rows = r.data or []
+    if not rows:
+        return JSONResponse({"ok": False, "error": "Not found"}, status_code=404)
+
+    t = rows[0]
+    return {"ok": True, "teacher_id": t["teacher_id"], "teacher": t}
 
 # ------------------------------
 # Sessions
@@ -159,6 +177,34 @@ def create_session(req: CreateSessionReq):
         return {"ok": True, "session_id": session_id, "current_question_id": current_question_id}
     except Exception as e:
         return JSONResponse({"ok": False, "where": "exception", "error": f"{type(e).__name__}: {e}"}, status_code=500)
+
+# ---- TEACHER: list past sessions ----
+@app.get("/api/teachers/{teacher_id}/sessions")
+def list_sessions_for_teacher(teacher_id: str, limit: int = 20, offset: int = 0):
+    """
+    Returns a teacher's sessions, newest first, with optional current question text.
+    Query params:
+      - limit (default 20)
+      - offset (default 0)
+    """
+    # basic session fields
+    r = supabase.table("sessions").select(
+        "session_id, session_name, current_question_id, created_at"
+    ).eq("teacher_id", teacher_id).order("created_at", desc=True).range(
+        offset, offset + limit - 1
+    ).execute()
+
+    rows = r.data or []
+
+    # OPTIONAL: enrich with current question text (one extra query)
+    qids = [row["current_question_id"] for row in rows if row.get("current_question_id")]
+    if qids:
+        qr = supabase.table("questions").select("question_id,question_text").in_("question_id", qids).execute()
+        qmap = {q["question_id"]: q["question_text"] for q in (qr.data or [])}
+        for row in rows:
+            row["current_question_text"] = qmap.get(row.get("current_question_id"))
+
+    return {"ok": True, "sessions": rows}
 
 # ------------------------------
 # Questions
