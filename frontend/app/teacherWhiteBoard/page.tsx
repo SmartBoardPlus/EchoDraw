@@ -66,7 +66,14 @@ const Page: NextPage = () => {
     () => searchParams.get("question_id") || searchParams.get("QuestionId") || "",
     [searchParams]
   );
-
+   const sessionID=React.useMemo(()=>{
+      const tParam = searchParams.get("SessionId"); 
+      if(tParam){
+        return tParam
+      }
+      
+       return "-1";
+    },[])
   // Editors
   const [sessionName, setSessionName] = useState<string>("");
   const [questionText, setQuestionText] = useState<string>("");
@@ -189,12 +196,18 @@ const Page: NextPage = () => {
     };
     try {
       console.log("TEACHER_CANVAS_SNAPSHOT:", payload);
+      fetch(`${API_BASE}/api/questions/${(questionId)}/text`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({question_text:" ", question_body: payload }),
+      })
       setSubmitted(true);
       setShowToast(true);
+
     } catch (err) {
       console.error("Failed to save question canvas:", err);
     } finally {
-      router.push("/questions");
+      router.push("/questions?SessionId="+sessionID);
     }
   }, [elements, appState, files, submitted, router]);
 
@@ -207,7 +220,7 @@ const Page: NextPage = () => {
 
         .page-root { display: flex; flex-direction: column; gap: 16px; padding: 16px; }
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,0.025); }
-        .excalidraw-wrap { height: 72vh; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .excalidraw-wrap { height: 92vh; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
         .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
         .label { font-size: 0.9rem; margin-bottom: 4px; display: block; }
         .input, .textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: #fff; color: #000; }
@@ -220,63 +233,7 @@ const Page: NextPage = () => {
         .note { font-size: 0.85rem; opacity: 0.8; }
       `}</style>
 
-      {/* Status */}
-      {msg && <div className="msg">{msg}</div>}
-
-      {/* Editors */}
-      <div className="card" style={{ padding: 16, display: "grid", gap: 16 }}>
-        <div className="row">
-          <div>
-            <label className="label">Session ID</label>
-            <input
-              className="input"
-              placeholder="session_id (uuid or short code)"
-              value={sessionId}
-              readOnly
-            />
-          </div>
-          <button className="btn" onClick={saveSessionName} disabled={!sessionId || loadingSession}>
-            {loadingSession ? "Saving…" : "Save Session Name"}
-          </button>
-        </div>
-        <div>
-          <label className="label">Session Name</label>
-          <input
-            className="input"
-            placeholder="e.g., Algebra – Period 2"
-            value={sessionName}
-            onChange={(e) => setSessionName(e.target.value)}
-          />
-          <div className="note">Updates: <code>PUT /api/sessions/{`{session_id}`}/text</code></div>
-        </div>
-
-        <hr style={{ borderColor: "var(--border)" }} />
-
-        <div className="row">
-          <div>
-            <label className="label">Question ID</label>
-            <input
-              className="input"
-              placeholder="question_id (uuid)"
-              value={questionId}
-              readOnly
-            />
-          </div>
-          <button className="btn" onClick={saveQuestionText} disabled={!questionId || loadingQuestion}>
-            {loadingQuestion ? "Saving…" : "Save Question Text"}
-          </button>
-        </div>
-        <div>
-          <label className="label">Question Text</label>
-          <textarea
-            className="textarea"
-            placeholder="Type the new question here…"
-            value={questionText}
-            onChange={(e) => setQuestionText(e.target.value)}
-          />
-          <div className="note">Updates: <code>PUT /api/questions/{`{question_id}`}/text</code></div>
-        </div>
-      </div>
+      
 
       {/* Canvas */}
       <div className="card excalidraw-wrap" aria-label="Whiteboard">
