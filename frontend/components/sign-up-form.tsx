@@ -48,6 +48,7 @@ export function SignUpForm({
         },
       });
       if (error) throw error;
+      fetch('http://localhost:8000/api/teachers', { method: 'POST' , headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ display_name:email.split("@")[0],email:email }) })
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
