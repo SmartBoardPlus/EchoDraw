@@ -1,31 +1,22 @@
 "use client";
 
-// pages/index.tsx
-// Excalidraw integration fixed per official docs: dynamic import (ssr: false) + CSS import
-// Docs: https://docs.excalidraw.com/docs/@excalidraw/excalidraw/integration
-
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 
-// ✅ Official stylesheet (as per docs). Ensure you installed: `npm i @excalidraw/excalidraw`
-// This provides the full Excalidraw toolbar (pencil, text, shapes, etc.)
+// ✅ Excalidraw CSS
 import "@excalidraw/excalidraw/index.css";
 
-/**
- * Minimal, single-file page that:
- * - Parses a provided palette.md content to define CSS variables (via <style jsx global>).
- * - Renders question image → Excalidraw whiteboard → Submit button (vertical stack).
- * - Shows a countdown badge (default 120s, override with ?t=SECONDS). Auto-submits at 0.
- * - On submit or auto-submit: logs vector JSON payload, locks board (view mode), shows closable toast.
- * - Hotkey: "S" to submit if not already submitted.
- *
- * No extra files, no external CSS. Excalidraw is dynamically imported with ssr: false.
- */
-
-// ⚠️ Replace this string with your palette.md content (you said you'll include it in the prompt).
-// We parse it to build CSS variables used across the UI (background, text, primary, etc.).
+/* ------------------------------------------------------------------ */
+/*  Palette (example)                                                  */
+/* ------------------------------------------------------------------ */
 const PALETTE_MD = `{
 "palette-1": "#F7F7F7",
 "palette-2": "#B7DFF1",
@@ -34,27 +25,16 @@ const PALETTE_MD = `{
 "palette-5": "#007B80"
 }`;
 
-// Dynamic import to avoid SSR issues with the canvas
-const Excalidraw = dynamic(
-  async () => {
-    const mod: any = await import("@excalidraw/excalidraw");
-    // The docs export named `Excalidraw`; keep fallbacks for safety across versions
-    return mod.Excalidraw || mod.default || (() => <div>Failed to load Excalidraw</div>);
-  },
-  { ssr: false, loading: () => <div style={{ padding: 24 }}>Loading whiteboard…</div> }
-);
-
-// ————— Palette parsing → CSS variables —————
 function parsePalette(md: string) {
   const jsonBlock = md.match(/```json\s*([\s\S]*?)\s*```/i);
   if (jsonBlock) {
     try {
       const obj = JSON.parse(jsonBlock[1]);
-      const p1 = obj["palette-1"]; // bg
-      const p2 = obj["palette-2"]; // muted/border
-      const p3 = obj["palette-3"]; // surface
-      const p4 = obj["palette-4"]; // primary/accent
-      const p5 = obj["palette-5"]; // text/cta
+      const p1 = obj["palette-1"];
+      const p2 = obj["palette-2"];
+      const p3 = obj["palette-3"];
+      const p4 = obj["palette-4"];
+      const p5 = obj["palette-5"];
       if ([p1, p2, p3, p4, p5].every(Boolean)) return { p1, p2, p3, p4, p5 };
     } catch {}
   }
@@ -63,37 +43,72 @@ function parsePalette(md: string) {
   return { p1, p2, p3, p4, p5 };
 }
 
-function paletteToCSSVars(p: { p1?: string; p2?: string; p3?: string; p4?: string; p5?: string }) {
-  const { p1 = "#ffffff", p2 = "#e5e5e5", p3 = "#cccccc", p4 = "#888888", p5 = "#111111" } = p || {};
+function paletteToCSSVars(p: {
+  p1?: string;
+  p2?: string;
+  p3?: string;
+  p4?: string;
+  p5?: string;
+}) {
+  const {
+    p1 = "#ffffff",
+    p2 = "#e5e5e5",
+    p3 = "#cccccc",
+    p4 = "#888888",
+    p5 = "#111111",
+  } = p || {};
   return `
     :root{
-        --bg: ${p5};
-        --text: ${p1};
-        --primary: ${p4};
-        --muted: ${p3};
-        --border: ${p3};
-        --surface: ${p2};
-      }
-    
+      --bg: ${p5};
+      --text: ${p1};
+      --primary: ${p4};
+      --muted: ${p3};
+      --border: ${p3};
+      --surface: ${p2};
+    }
   `;
 }
 
-// ————— Page —————
+/* ------------------------------------------------------------------ */
+/*  Excalidraw dynamic import (TS-friendly)                            */
+/*  We cast to any to avoid prop-type friction across versions.        */
+/* ------------------------------------------------------------------ */
+const ExcalidrawDynamic = dynamic<any>(
+  async () => {
+    const m: any = await import("@excalidraw/excalidraw");
+    // Some versions export { Excalidraw }, others default export it
+    return (m.Excalidraw ?? m.default) as any;
+  },
+  {
+    ssr: false,
+    loading: () => <div style={{ padding: 24 }}>Loading whiteboard…</div>,
+  }
+);
+
+// Use a component type that accepts any props
+const Excal: React.ComponentType<any> =
+  ExcalidrawDynamic as unknown as React.ComponentType<any>;
+
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
+/* ------------------------------------------------------------------ */
 const Page: NextPage = () => {
-  // Timer: default 120s; override via ?t=SECONDS
-  //Timed : defualt true: override via ?Timed=false
   const searchParams = useSearchParams();
+
+  // Query params
   const timed = useMemo(() => {
-    const timedParam = searchParams.get("timed");
-    return timedParam === "false" ? false : true;
+    const p = searchParams.get("timed");
+    return p === "false" ? false : true;
   }, [searchParams]);
+
   const totalSeconds = useMemo(() => {
     const tParam = searchParams.get("t");
     const parsed = tParam ? parseInt(tParam, 10) : NaN;
-    
-    return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 24 * 60 * 60) : 120;
+    return Number.isFinite(parsed) && parsed > 0
+      ? Math.min(parsed, 24 * 60 * 60)
+      : 120;
   }, [searchParams]);
-  
+
   const [remaining, setRemaining] = useState<number>(totalSeconds);
 
   // Excalidraw scene state
@@ -104,9 +119,13 @@ const Page: NextPage = () => {
   const [showToast, setShowToast] = useState(false);
 
   // Keep latest scene for submit
-  const sceneRef = useRef<{ elements: any[]; appState: any; files: Record<string, any> } | null>(null);
+  const sceneRef = useRef<{
+    elements: any[];
+    appState: any;
+    files: Record<string, any>;
+  } | null>(null);
 
-  // onChange signature differs across versions: (elements, appState) or (elements, appState, files)
+  // Handle editor changes (types vary by Excalidraw version)
   const handleChange = useCallback((...args: any[]) => {
     const [els = [], state = {}, f = {}] = args;
     setElements(els);
@@ -115,7 +134,7 @@ const Page: NextPage = () => {
     sceneRef.current = { elements: els, appState: state, files: f };
   }, []);
 
-  // Submit logic: log vector JSON and lock board
+  // Submit logic: capture vector payload, lock board, show toast
   const doSubmit = useCallback(() => {
     if (submitted) return;
     const snapshot = sceneRef.current ?? { elements, appState, files };
@@ -125,11 +144,12 @@ const Page: NextPage = () => {
       files: snapshot.files ?? {},
       submittedAt: new Date().toISOString(),
     };
+
     try {
       // eslint-disable-next-line no-console
       console.log("SUBMISSION_PAYLOAD:", payload);
-      setSubmitted(true); // lock
-      setShowToast(true); // toast
+      setSubmitted(true);
+      setShowToast(true);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("Failed to submit:", err);
@@ -137,19 +157,20 @@ const Page: NextPage = () => {
   }, [elements, appState, files, submitted]);
 
   // Countdown
-  if(timed){
-    useEffect(() => {
-      if (submitted) return;
-      if (remaining <= 0 && timed) {
-        doSubmit();
-        return;
-      }
-      const id = setInterval(() => setRemaining((s) => (s > 0 ? s - 1 : 0)), 1000);
-      return () => clearInterval(id);
-  }, [remaining, submitted, doSubmit]);
-  }
-  
+  useEffect(() => {
+    if (!timed) return;
+    if (submitted) return;
 
+    if (remaining <= 0) {
+      doSubmit();
+      return;
+    }
+    const id = setInterval(
+      () => setRemaining((s) => (s > 0 ? s - 1 : 0)),
+      1000
+    );
+    return () => clearInterval(id);
+  }, [remaining, submitted, doSubmit, timed]);
 
   // mm:ss
   const mmss = useMemo(() => {
@@ -167,70 +188,159 @@ const Page: NextPage = () => {
 
   return (
     <div className="page-root" style={{ minHeight: "100vh" }}>
-      {/* Global CSS variables sourced from palette.md */}
+      {/* Global CSS variables sourced from palette */}
       <style jsx global>{`
         ${cssVars}
-        html, body, #__next { height: 100%; background: var(--bg); color: var(--text); }
-        * { box-sizing: border-box; }
+        html,
+        body,
+        #__next {
+          height: 100%;
+          background: var(--bg);
+          color: var(--text);
+        }
+        * {
+          box-sizing: border-box;
+        }
 
-        .page-root { display: flex; flex-direction: column; gap: 16px; padding: 16px; }
+        .page-root {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding: 16px;
+        }
 
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,0.025); }
-        .header { position: relative; padding: 12px 12px 0 12px; border-radius: 12px; }
+        .card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 1px 0 rgba(0, 0, 0, 0.025);
+        }
 
-        .question-img { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+        .timer-badge {
+          position: fixed;
+          top: 24px;
+          right: 24px;
+          z-index: 30;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 120px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          border: 1px solid var(--border);
+          background: var(--primary);
+          color: var(--text);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+          font-size: 24px;
+        }
 
-        .timer-badge { position: fixed; top: 24px; right: 24px; z-index: 30; display: inline-flex; align-items: center; justify-content: center; min-width: 120px; padding: 6px 10px; border-radius: 999px; font-weight: 700; letter-spacing: 0.02em; border: 1px solid var(--border); background: var(--primary); color: var(--text); box-shadow: 0 2px 10px rgba(0,0,0,0.08); font-size: 25px }
-        .timer-danger { background: var(--danger); }
+        .excalidraw-wrap {
+          height: 95vh;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          overflow: hidden;
+        }
 
-        .excalidraw-wrap { height: 97vh; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .submit-bar {
+          display: flex;
+          justify-content: flex-end;
+          padding: 8px;
+          position: absolute;
+          bottom: 24px;
+          right: 20px;
+          z-index: 30;
+        }
 
-        .submit-bar { display: flex; justify-content: flex-end; padding: 8px;position: absolute; bottom: 24px; right: 20px; z-index: 30}
-        .btn { border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: var(--primary); color: var(--text); font-weight: 600; cursor: pointer; transition: transform .02s ease, filter .15s ease; user-select: none; }
-        .btn:hover { filter: brightness(0.95); }
-        .btn:active { transform: translateY(1px); }
-        .btn[disabled], .btn[aria-disabled="true"] {filter: brightness(80%) cursor: not-allowed; }
+        .btn {
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          padding: 10px 16px;
+          background: var(--primary);
+          color: var(--text);
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.02s ease, filter 0.15s ease;
+          user-select: none;
+        }
+        .btn:hover {
+          filter: brightness(0.95);
+        }
+        .btn:active {
+          transform: translateY(1px);
+        }
+        .btn[disabled],
+        .btn[aria-disabled="true"] {
+          filter: brightness(85%);
+          cursor: not-allowed;
+        }
 
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--surface); color: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.12); display: flex; align-items: center; gap: 12px; z-index: 40; padding: 7px 10px 7px 20px; }
-        .toast button { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px 8px; cursor: pointer; }
+        .toast {
+          position: fixed;
+          bottom: 30px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: var(--surface);
+          color: var(--bg);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 12px 16px;
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          z-index: 40;
+          padding: 7px 10px 7px 20px;
+        }
+        .toast button {
+          border: 1px solid var(--border);
+          background: var(--bg);
+          color: var(--text);
+          border-radius: 8px;
+          padding: 6px 8px;
+          cursor: pointer;
+        }
       `}</style>
 
       {/* Timer */}
-      {timed &&(<div className={`timer-badge ${remaining <= 10 ? "timer-danger" : ""}`} aria-live="polite" aria-atomic="true">
-        {mmss}
-      </div>)}
-      
+      {timed && (
+        <div className={`timer-badge`} aria-live="polite" aria-atomic="true">
+          {mmss}
+        </div>
+      )}
 
-      {/* Question image (top) */}
-      {/* Excalidraw whiteboard (middle) — default toolbar shows pencil + text + shapes */}
+      {/* Whiteboard */}
       <div className="card excalidraw-wrap" aria-label="Whiteboard">
-        <Excalidraw
-          // @ts-ignore — API types vary across versions
-          onChange={handleChange}
+        <Excal
+          // Keep as any to avoid version-to-version type friction
+          onChange={handleChange as any}
           viewModeEnabled={submitted}
           gridModeEnabled={false}
+          initialData={{ elements: [], appState: {}, files: {} }}
         />
       </div>
 
-      {/* Submit button (bottom) */}
+      {/* Submit */}
       <div className="submit-bar">
         <button
           className="btn"
           onClick={doSubmit}
           disabled={submitted}
           aria-disabled={submitted ? "true" : "false"}
-          aria-label={submitted ? "Already submitted" : "Submit answer (S)"}
-          title="Submit answer (S)"
+          aria-label={submitted ? "Already submitted" : "Submit answer"}
+          title="Submit answer"
         >
           {submitted ? "Submitted" : "Submit"}
         </button>
       </div>
 
-      {/* Confirmation toast/banner */}
+      {/* Toast */}
       {showToast && (
         <div className="toast" role="status" aria-live="polite">
           <span>Answer submitted</span>
-          <button onClick={() => setShowToast(false)} aria-label="Close notification">
+          <button onClick={() => setShowToast(false)} aria-label="Close">
             Close
           </button>
         </div>
