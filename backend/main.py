@@ -4,13 +4,15 @@ import uuid
 import base64
 from pathlib import Path
 from typing import Optional, Any
-
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from pydantic import Field
 from supabase import create_client, Client
+from collections import defaultdict
+from typing import List, Dict, Any
 
 # ------------------------------
 # Environment / Supabase client
@@ -183,6 +185,42 @@ def create_session(req: CreateSessionReq):
     except Exception as e:
         return JSONResponse({"ok": False, "where": "exception", "error": f"{type(e).__name__}: {e}"}, status_code=500)
 
+# === Update SESSION text (name) ===
+class UpdateSessionText(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+@app.put("/api/sessions/{session_id}/text")
+def update_session_text(session_id: str, req: UpdateSessionText):
+    """
+    Update the session's display name.
+    Body: { "name": "New session name" }
+    """
+    try:
+        res = (
+            supabase.table("sessions")
+            .update({"name": req.name})
+            .eq("session_id", session_id)
+            .execute()
+        )
+        rows = getattr(res, "data", None) or []
+        if not rows:
+            exists = (
+                supabase.table("sessions")
+                .select("session_id")
+                .eq("session_id", session_id)
+                .execute()
+            )
+            if not getattr(exists, "data", None):
+                raise HTTPException(status_code=404, detail="Session not found")
+            return {"ok": True, "session_id": session_id, "name": req.name}
+
+        row = rows[0]
+        return {"ok": True, "session_id": row["session_id"], "name": row.get("name", req.name)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"{type(e).__name__}: {e}"}, status_code=500)
+    
 # ---- TEACHER: list past sessions ----
 @app.get("/api/teachers/{teacher_id}/sessions")
 def list_sessions_for_teacher(teacher_id: str, limit: int = 20, offset: int = 0):
@@ -234,6 +272,44 @@ def create_question(req: CreateQuestionReq):
     except Exception as e:
         return JSONResponse({"ok": False, "where": "exception", "error": f"{type(e).__name__}: {e}"}, status_code=500)
 
+# === Update QUESTION text ===
+class UpdateQuestionText(BaseModel):
+    question_text: str = Field(min_length=1, max_length=5000)
+
+@app.put("/api/questions/{question_id}/text")
+def update_question_text(question_id: str, req: UpdateQuestionText):
+    """
+    Update the text of a question.
+    Body: { "question_text": "New question text..." }
+    """
+    try:
+        res = (
+            supabase.table("questions")
+            .update({"question_text": req.question_text})
+            .eq("question_id", question_id)
+            .execute()
+        )
+        # If your supabase client returns updated rows in res.data:
+        rows = getattr(res, "data", None) or []
+        if not rows:
+            # If no returning rows, verify existence and return minimal payload
+            exists = (
+                supabase.table("questions")
+                .select("question_id")
+                .eq("question_id", question_id)
+                .execute()
+            )
+            if not getattr(exists, "data", None):
+                raise HTTPException(status_code=404, detail="Question not found")
+            return {"ok": True, "question_id": question_id, "question_text": req.question_text}
+
+        row = rows[0]
+        return {"ok": True, "question_id": row["question_id"], "question_text": row["question_text"]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"{type(e).__name__}: {e}"}, status_code=500)
+    
 @app.post("/api/sessions/{session_id}/current_question")
 def set_current_question(session_id: str, req: SetCurrentQuestionReq):
     # validate both session and question
@@ -271,6 +347,59 @@ def get_current_question(session_id: str):
 def list_questions(session_id: str):
     r = supabase.table("questions").select("question_id,question_text,created_at").eq("session_id", session_id).order("created_at").execute()
     return r.data or []
+
+# ---- ALL ANSWERS GROUPED BY QUESTION (for a session) ----
+@app.get("/api/sessions/{session_id}/answers_by_question")
+def answers_by_question(session_id: str, include_json: bool = True):
+    """
+    Returns all questions in the session, each with its list of answers.
+    Query param:
+      - include_json=false|true  (when true, includes board_json per answer; off by default to keep payload light) """
+            
+    # 1) Get all questions in this session
+    q_res = (
+        supabase.table("questions")
+        .select("question_id,question_text,created_at")
+        .eq("session_id", session_id)
+        .order("created_at")
+        .execute()
+    )
+    questions: List[Dict[str, Any]] = q_res.data or []
+    if not questions:
+        return {"ok": True, "questions": []}
+
+    qids = [q["question_id"] for q in questions]
+
+    # 2) Get all answers for those questions (single round-trip)
+    fields = "answer_id,question_id,session_id,preview_url,student_id,created_at"
+    if include_json:
+        fields += ",board_json"
+
+    a_res = (
+        supabase.table("answers")
+        .select(fields)
+        .in_("question_id", qids)
+        .order("created_at")
+        .execute()
+    )
+    answers: List[Dict[str, Any]] = a_res.data or []
+
+    # 3) Group answers by question_id
+    grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for a in answers:
+        grouped[a["question_id"]].append(a)
+
+    # 4) Attach to each question
+    out = []
+    for q in questions:
+        out.append({
+            "question_id": q["question_id"],
+            "question_text": q["question_text"],
+            "created_at": q["created_at"],
+            "answers": grouped.get(q["question_id"], []),
+        })
+
+    return {"ok": True, "questions": out}
 
 # ------------------------------
 # Answers
