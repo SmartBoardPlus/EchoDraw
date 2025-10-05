@@ -4,7 +4,7 @@
 // Excalidraw integration fixed per official docs: dynamic import (ssr: false) + CSS import
 // Docs: https://docs.excalidraw.com/docs/@excalidraw/excalidraw/integration
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -93,6 +93,9 @@ const Page: NextPage = () => {
     
     return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 24 * 60 * 60) : 120;
   }, [searchParams]);
+  const answerId=useMemo(() => {
+    
+  }, []);
   
   const [remaining, setRemaining] = useState<number>(totalSeconds);
 

@@ -1,119 +1,241 @@
-// Data for the Lessons/Sessions page:
-// JSON:
-/*
-JSON object: {sessionName, sessionID}
-
-JSON objects in a list:
-
-For each session:
-Edit icon = Pencil
-Delete icon = Trashbin
-
-*/
-
-/*
-TODO:
-
-1. Replace Links 'Edit' and 'Delete' with BinaryStateButtons, which show different pictures whenever the
-mouse cursor is hovering over them or not (the images are imported)
-
-2. Put the BinaryStateButtons in the same line as the Lesson Name
-
-3. Implement the Edit and Delete.
-
-4. Reduce the gap between the top nav bar and the first Lesson element.
-
-*/
-
 "use client";
 
 import Link from "next/link";
-import React, { MouseEventHandler } from "react";
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
+import type { MouseEventHandler } from "react";
+import type { StaticImageData } from "next/image";
+
 import deleteTrueImg from "./assets/delete-trashbin-open.png";
 import deleteFalseImg from "./assets/delete-trashbin-closed.png";
 import editTrueImg from "./assets/edit-pen-withstroke.png";
 import editFalseImg from "./assets/edit-pen-nostroke.png";
+import { PenLine } from "lucide-react";
+
+type Session = {
+  sessionID: string;
+  sessionName: string;
+};
 
 export default function Lessons() {
-  const deleteLesson = () => {
-    console.log("Haha");
+  // Mock data — replace with your JSON fetch later
+  const initial: Session[] = useMemo(
+    () => [
+      { sessionID: "s-101", sessionName: "Algebra — Factoring" },
+      { sessionID: "s-102", sessionName: "Physics — Kinematics" },
+      { sessionID: "s-103", sessionName: "Chemistry — Stoichiometry" },
+    ],
+    []
+  );
+
+  const [lessons, setLessons] = useState<Session[]>(initial);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState<string>("");
+
+  const startEdit = (id: string, currentName: string) => {
+    setEditingId(id);
+    setDraftName(currentName);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setDraftName("");
+  };
+
+  const saveEdit = () => {
+    if (!editingId) return;
+    setLessons((prev) =>
+      prev.map((s) =>
+        s.sessionID === editingId ? { ...s, sessionName: draftName.trim() || s.sessionName } : s
+      )
+    );
+    setEditingId(null);
+    setDraftName("");
+  };
+  const addLesson = () => {
+    fetch('http://localhost:8000/api/sessions', { method: 'POST' , headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_name:"New Lesson",teacher_id:"e079505e-e6ed-4b96-8e33-7425bc21cf04" }) })
+      .then(response => {
+        if(response.ok){
+          return response.json();
+        }else{
+          throw new Error('Failed to create session');
+        }
+        }
+        
+        )
+      .then(data => {
+        const newLesson: Session ={sessionID:data.session_id , sessionName: "New Lesson"};
+        setLessons((prev) => [...prev, newLesson]);
+      }
+      )
+  }
+  const deleteLesson = (id: string) => {
+    setLessons((prev) => prev.filter((s) => s.sessionID !== id));
+    // TODO: call your API here
+    console.log("Deleted lesson:", id);
   };
 
   return (
     <main className="min-h-screen bg-[#f7f7f7] flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
+      <div className="flex-1 w-full flex flex-col gap-6 items-center">
         <nav className="w-full bg-[#b7dff1] flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>Home</Link>
-              <Link href={"/"}>Log out</Link>
-            </div>
+          <div className="w-full max-w-5xl flex justify-between items-center px-5 text-sm">
+            <Link href={"/"}>Home</Link>
+            <Link href={"/"}>Log out</Link>
           </div>
         </nav>
 
-        <Lesson lessonName="Placeholder" />
+        {/* Content container */}
+        <div className="w-full max-w-5xl px-5 pb-10">
+          <h1 className="text-xl font-semibold mb-3">Lessons / Sessions</h1>
 
-        <BinaryStateButton
-          className="deleteButton"
-          onMouseOver={deleteTrueImg.src}
-          onMouseExit={deleteFalseImg.src}
-          onClickCallback={() => deleteLesson()}
-        />
+          <ul className="space-y-3">
+            {lessons.map((lesson) => (
+              <li
+                key={lesson.sessionID}
+                className="w-full bg-[#b7dff1]/60 border border-[#b7dff1] rounded-lg px-4 py-3"
+              >
+                <Link href={`/questions?SessionId=${lesson.sessionID}`}>
+                <LessonRow
+                  session={lesson}
+                  isEditing={editingId === lesson.sessionID}
+                  draftName={editingId === lesson.sessionID ? draftName : ""}
+                  onDraftChange={setDraftName}
+                  onStartEdit={() => startEdit(lesson.sessionID, lesson.sessionName)}
+                  onCancelEdit={cancelEdit}
+                  onSaveEdit={saveEdit}
+                  onDelete={() => deleteLesson(lesson.sessionID)}
+                />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <button
+        onClick={addLesson}
+        className="fixed bottom-8 right-8 bg-teal-500 text-white rounded-xl w-40 h-16 flex items-center justify-center gap-2 shadow-lg hover:bg-teal-400 transition-colors"
+        >
+          <PenLine size={20} strokeWidth={2.5} />
+          <span className="font-medium">New Lesson</span>
+        </button>
       </div>
     </main>
   );
 }
 
 interface BinaryStateButtonProps {
-  className: string; // CSS class name
-  onMouseOver: string; // Image to be displayed when mouse is hovering on it
-  onMouseExit: string; // Image to be displayed when mouse is hovering on it
-  onClickCallback: MouseEventHandler<HTMLInputElement>; // Callback function to execute when clicked
+  className?: string;
+  hoverSrc: StaticImageData | string;
+  idleSrc: StaticImageData | string;
+  alt: string;
+  onClick: MouseEventHandler<HTMLButtonElement>;
+  title?: string;
 }
 
 const BinaryStateButton: React.FC<BinaryStateButtonProps> = ({
   className,
-  onMouseOver,
-  onMouseExit,
-  onClickCallback,
+  hoverSrc,
+  idleSrc,
+  alt,
+  onClick,
+  title,
 }) => {
-  const [currentImage, setCurrentImage] = useState(onMouseExit);
+  const [current, setCurrent] = useState<string>(
+    typeof idleSrc === "string" ? idleSrc : idleSrc.src
+  );
 
-  const onMouseOverFunction = () => {
-    setCurrentImage(onMouseOver);
-  };
-
-  const onMouseLeaveFunction = () => {
-    setCurrentImage(onMouseExit);
-  };
+  const hoverURL = typeof hoverSrc === "string" ? hoverSrc : hoverSrc.src;
+  const idleURL = typeof idleSrc === "string" ? idleSrc : idleSrc.src;
 
   return (
-    <div>
-      <input
-        type="image"
-        onClick={onClickCallback}
-        onMouseOver={() => onMouseOverFunction}
-        onMouseLeave={() => onMouseLeaveFunction}
-        src={`url(${currentImage})`}
-      ></input>
-    </div>
+    <button
+      type="button"
+      className={className}
+      onClick={onClick}
+      onMouseEnter={() => setCurrent(hoverURL)}
+      onMouseLeave={() => setCurrent(idleURL)}
+      title={title}
+      aria-label={title || alt}
+    >
+      {/* Use a plain <img> so swapping src is trivial */}
+      <img src={current} alt={alt} className="h-6 w-6" />
+    </button>
   );
 };
 
-interface LessonProps {
-  lessonName: string;
+interface LessonRowProps {
+  session: Session;
+  isEditing: boolean;
+  draftName: string;
+  onDraftChange: (v: string) => void;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  onDelete: () => void;
 }
 
-const Lesson: React.FC<LessonProps> = ({ lessonName }) => {
+const LessonRow: React.FC<LessonRowProps> = ({
+  session,
+  isEditing,
+  draftName,
+  onDraftChange,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+}) => {
   return (
-    <div className="lesson w-full bg-[#b7dff1] p-5">
-      <span>{lessonName}</span>
-      <br></br>
+    <div className="flex items-center justify-between gap-3">
+      {/* Left side: name (or editor) */}
+      <div className="min-w-0 flex-1">
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <input
+              className="flex-1 min-w-0 rounded border border-gray-300 bg-white px-2 py-1 text-sm"
+              value={draftName}
+              onChange={(e) => onDraftChange(e.target.value)}
+              placeholder="Lesson name"
+              autoFocus
+            />
+            <button
+              className="px-3 py-1 rounded bg-[#34a8a2] text-white text-sm"
+              onClick={onSaveEdit}
+            >
+              Save
+            </button>
+            <button
+              className="px-3 py-1 rounded bg-gray-200 text-gray-800 text-sm"
+              onClick={onCancelEdit}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="font-medium truncate">{session.sessionName}</span>
+            <span className="text-xs text-gray-600">#{session.sessionID}</span>
+          </div>
+        )}
+      </div>
 
-      <Link href={"/"}>Edit</Link>
-      <br></br>
-      <Link href={"/"}>Delete</Link>
+      {/* Right side: action buttons inline with the name */}
+      {!isEditing && (
+        <div className="flex items-center gap-2">
+          <BinaryStateButton
+            title="Edit"
+            alt="Edit lesson"
+            idleSrc={editFalseImg}
+            hoverSrc={editTrueImg}
+            onClick={onStartEdit}
+          />
+          <BinaryStateButton
+            title="Delete"
+            alt="Delete lesson"
+            idleSrc={deleteFalseImg}
+            hoverSrc={deleteTrueImg}
+            onClick={onDelete}
+          />
+        </div>
+      )}
     </div>
   );
 };
