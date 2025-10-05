@@ -8,15 +8,26 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#f7f7f7] flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-20 items-center">
+        {/* NAVBAR */}
         <nav className="w-full bg-[#b7dff1] flex justify-center border-b border-b-foreground/10 h-16">
           <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
             <div className="flex gap-5 items-center font-semibold">
               <Link href={"/"}>About</Link>
               <Link href={"/"}>Sign in</Link>
+
+              {/* ⇓ NEW: Student join link (goes to /student page) */}
+              <Link
+                href="/student"
+                className="rounded-md bg-emerald-600 text-white px-3 py-1.5 hover:bg-emerald-500 transition"
+              >
+                Student (Join Class)
+              </Link>
             </div>
           </div>
         </nav>
+
         <HomePageIntroduction />
+
         <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
           <main className="flex-1 flex flex-col gap-6 px-2">
             <div className="flex-1 flex flex-row gap-x-10 bg-[#34a8a2] px-8 py-5 rounded-[15px] homepage-description-section">
@@ -106,6 +117,22 @@ function HomePageIntroduction() {
       <p className="text-3xl lg:text-4xl !leading-tight mx-[100px] max-w-xl text-center">
         MediumBoard, unmatched by Mentimeter
       </p>
+
+      {/* ⇓ NEW: Primary CTAs under the hero */}
+      <div className="mt-6 flex items-center justify-center gap-3">
+        <Link
+          href="/student"
+          className="rounded-lg bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-500 transition"
+        >
+          I’m a Student – Join Class
+        </Link>
+        <Link
+          href="/teacherWhiteBoard"
+          className="rounded-lg border border-zinc-300 px-4 py-2 hover:bg-zinc-100 transition"
+        >
+          I’m a Teacher – Start Session
+        </Link>
+      </div>
     </div>
   );
 }
