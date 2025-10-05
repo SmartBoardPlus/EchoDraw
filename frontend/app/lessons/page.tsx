@@ -10,6 +10,7 @@ import deleteFalseImg from "./assets/delete-trashbin-closed.png";
 import editTrueImg from "./assets/edit-pen-withstroke.png";
 import editFalseImg from "./assets/edit-pen-nostroke.png";
 import { PenLine } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 type Session = {
   sessionID: string;
@@ -26,8 +27,28 @@ export default function Lessons() {
     ],
     []
   );
-
+ 
   const [lessons, setLessons] = useState<Session[]>(initial);
+   const searchParams = useSearchParams();
+    const teacherId=React.useMemo(()=>{
+      const tParam = searchParams.get("TeacherId"); 
+      if(tParam){
+        fetch(`http://localhost:8000/api/teachers/${tParam}/sessions`, { method: 'GET' , headers: { 'Content-Type': 'application/json' } }
+        ).then(response => response.json()).then(data => {
+          if(data.sessions.length==0){
+            setLessons([]);
+            return;
+          }
+          const lessons=data.sessions.map((q:any)=>({sessionID:q.session_id,sessionName:q.session_name}));
+          console.log(lessons);
+          setLessons(lessons);
+        }
+        ) 
+        return tParam
+      }
+      
+       return "-1";
+    },[])
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState<string>("");
 
@@ -52,7 +73,7 @@ export default function Lessons() {
     setDraftName("");
   };
   const addLesson = () => {
-    fetch('http://localhost:8000/api/sessions', { method: 'POST' , headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_name:"New Lesson",teacher_id:"e079505e-e6ed-4b96-8e33-7425bc21cf04" }) })
+    fetch('http://localhost:8000/api/sessions', { method: 'POST' , headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_name:"New Lesson",teacher_id:teacherId }) })
       .then(response => {
         if(response.ok){
           return response.json();
@@ -94,7 +115,7 @@ export default function Lessons() {
                 key={lesson.sessionID}
                 className="w-full bg-[#b7dff1]/60 border border-[#b7dff1] rounded-lg px-4 py-3"
               >
-                <Link href={`/questions?SessionId=${lesson.sessionID}`}>
+                
                 <LessonRow
                   session={lesson}
                   isEditing={editingId === lesson.sessionID}
@@ -105,7 +126,6 @@ export default function Lessons() {
                   onSaveEdit={saveEdit}
                   onDelete={() => deleteLesson(lesson.sessionID)}
                 />
-                </Link>
               </li>
             ))}
           </ul>
@@ -210,10 +230,12 @@ const LessonRow: React.FC<LessonRowProps> = ({
             </button>
           </div>
         ) : (
+          <Link href={`/questions?SessionId=${session.sessionID}`}>
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{session.sessionName}</span>
             <span className="text-xs text-gray-600">#{session.sessionID}</span>
           </div>
+          </Link>
         )}
       </div>
 
