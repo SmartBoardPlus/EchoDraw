@@ -1,3 +1,5 @@
+![EchoDraw logo](frontend/app/images/hack-the-valley-echo-draw.png "EchoDraw logo")
+
 # EchoDraw
 
 ## 💡 Inspiration
