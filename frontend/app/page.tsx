@@ -91,21 +91,21 @@ Students can join a lesson using a unique code, respond on their own digital whi
           <main className="flex-1 flex flex-col gap-6 px-2">
             <HomePageCrewMember
               name="George Postica"
-              description="Description about George"
+              description="I’m a frontend developer and computer science student at York University who loves bringing ideas to life through clean, responsive, and user-focused designs. I enjoy working with React, TypeScript, and Next.js to build smooth, intuitive web experiences that make a real impact. Whether I’m refining interfaces or solving tricky UI challenges, I’m driven by creating products that look great and feel effortless to use."
               photoSrc={georgePFP.src}
             />
             <HomePageCrewMember
               name="Ethan Diep"
-              description="Description about Ethan"
+              description="I’m a frontend developer and computer science student at the University of Toronto who enjoys turning complex ideas into clean, interactive web experiences. I love experimenting with React, Vite, and creative 3D visuals to build projects that are both functional and fun—like my Volume Visualizer and Worldle remake. With a strong foundation in design and collaboration, I focus on creating engaging, easy-to-use interfaces that bring imagination to life through code."
             />
             <HomePageCrewMember
               name="Kaleel Maharaj"
-              description="Description about Kaleel"
+              description="I’m a backend developer and computer science student at Toronto Metropolitan University passionate about building data-driven applications that are both efficient and impactful. I love working with Python, JavaScript, and SQL to develop seamless systems that connect users with meaningful data. From designing web applications like EcoCatch to optimizing backend logic, I focus on writing clean, reliable code that helps ideas become reality."
               photoSrc={kaleelPFP.src}
             />
             <HomePageCrewMember
               name="Nhat Minh Phan"
-              description="Description about Minh"
+              description="I’m a design-focused developer and computer science student at York University with a passion for creating clean, interactive, and visually engaging user experiences. I love combining creativity and code—bringing interfaces to life through React, JavaScript, and thoughtful UI design. Whether I’m crafting layouts, refining visuals, or adding interactive elements, I focus on making every project intuitive, aesthetic, and enjoyable to use."
               photoSrc={minhPFP.src}
             />
           </main>
@@ -159,7 +159,7 @@ function HomePageGitHubLink() {
       </p>
       <p className="text-3xl lg:text-3xl !leading-tight mx-[100px] max-w-xl text-center">
         Check out our{" "}
-        <a href="https://github.com/SmartBoardPlus/NextJSBoard">
+        <a href="https://github.com/SmartBoardPlus/EchoDraw">
           GitHub repository
         </a>{" "}
         <b>
