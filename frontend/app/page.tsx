@@ -96,7 +96,7 @@ Students can join a lesson using a unique code, respond on their own digital whi
             />
             <HomePageCrewMember
               name="Ethan Diep"
-              description="Description about Ethan"
+              description="I’m a frontend developer and computer science student at the University of Toronto who enjoys turning complex ideas into clean, interactive web experiences. I love experimenting with React, Vite, and creative 3D visuals to build projects that are both functional and fun—like my Volume Visualizer and Worldle remake. With a strong foundation in design and collaboration, I focus on creating engaging, easy-to-use interfaces that bring imagination to life through code."
             />
             <HomePageCrewMember
               name="Kaleel Maharaj"
