@@ -1,105 +1,57 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# EchoDraw
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+## 💡 Inspiration
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+As students, we’ve all experienced classrooms where engagement fades quickly — students hesitate to participate for fear of making mistakes, and teachers struggle to identify learning gaps in real time. We were inspired to create **EchoDraw** to make classrooms more interactive, anonymous, and insightful. By blending collaborative whiteboarding with real-time feedback, EchoDraw helps teachers **see what students are thinking** without the pressure of raising hands.
 
-## Features
+## 🔍 What it does
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+**EchoDraw** allows teachers to create lessons composed of **digital whiteboard questions**.  
+Students can **join a lesson using a unique code**, respond on their own **digital whiteboards**, and **submit their answers anonymously**.  
+Teachers can then:
 
-## Demo
+- **Shuffle through responses** to identify common misconceptions.
+- **Annotate directly on submissions** to highlight and correct mistakes.
+- **Compile all responses into a single PDF** and export it to their digital classroom platform for review or sharing.
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+The result is a more **engaged classroom**, **faster feedback loops**, and **deeper learning**.
 
-## Deploy to Vercel
+## ⚙️ How we built it
 
-Vercel deployment will guide you through creating a Supabase account and project.
+Frontend:
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+- **React + Nextjs + TailwindCSS** for building a responsive, intuitive, and modern user interface.
+- **Excalidraw** to power the interactive digital whiteboards, enabling smooth drawing, real-time updates, and annotation features for both students and teachers.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+Backend:
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+- **Supabase** handles user authentication, whiteboard data synchronization, and database storage. It allows lessons, student submissions, and annotations to be stored and retrieved efficiently, while keeping setup and integration lightweight.
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+## 🪦 Challenges we ran into
 
-## Clone and run locally
+- **Integrating the backend with the frontend** proved more complex than expected. Setting up seamless communication between React and Supabase required careful structuring and debugging.
+- We faced **version control and synchronization issues**, which occasionally led to merge conflicts and slowed down development as we coordinated changes across the team.
+- **Integrating Excalidraw** into our project also presented some hurdles — especially around customizing its features to fit our lesson and submission workflows smoothly.
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+## 😁 Accomplishments that we're proud of
 
-2. Create a Next.js app using the Supabase Starter template npx command
+- Creating a **fully functional and practical digital classroom tool** during the hackathon.
+- Implementing a **whiteboard system** that’s lightweight yet feature-rich.
+- Seamlessly integrating **PDF generation** for lesson summaries.
+- Achieving a **smooth teacher-student workflow** from lesson creation to feedback export.
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+## 📖 What we learned
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+Throughout the development of EchoDraw, we gained valuable experience in **frontend–backend integration**, especially when connecting React with Supabase for real-time functionality. We learned how to manage **version control collaboratively**, resolving conflicts and keeping our workflow organized. Integrating **Excalidraw** taught us how to adapt external libraries to fit our specific use case, customizing its features for classroom interactions. Overall, we improved our ability to **work as a team under time pressure**, build efficiently with new tools, and structure a project from idea to functional prototype.
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+## 🤔 What's next for EchoDraw
 
-3. Use `cd` to change into the app's directory
+**Analytics Dashboard**: Provide teachers with insights into common mistakes, participation rates, and progress trends over time.
 
-   ```bash
-   cd with-supabase-app
-   ```
+**Multi-Lesson Support**: Allow teachers to save and reuse lessons, enabling more structured course planning.
 
-4. Rename `.env.example` to `.env.local` and update the following:
+**Handwriting Recognition**: Use AI to parse handwritten answers, allowing for auto-grading or feedback suggestions.
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+**Integration with LMS platforms**: Seamless export to Google Classroom, Canvas, or Microsoft Teams.
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
-
-5. You can now run the Next.js local development server:
-
-   ```bash
-   npm run dev
-   ```
-
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
-
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
-
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
-
-## Feedback and issues
-
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+**Mobile App Version**: Extend EchoDraw to iOS and Android for increased accessibility across devices.

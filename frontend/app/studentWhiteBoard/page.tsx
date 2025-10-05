@@ -133,6 +133,10 @@ const Page: NextPage = () => {
     setFiles(f);
     sceneRef.current = { elements: els, appState: state, files: f };
   }, []);
+  useEffect(() => {
+  if (!excalAPIRef.current) return;
+  // e.g., load from your questions[qIndex].scene
+  const  elements:any[]= JSON.parse(questions[qIndex]?.question_text); // {elements, appState, files}
 
   // Submit logic: capture vector payload, lock board, show toast
   const doSubmit = useCallback(() => {
