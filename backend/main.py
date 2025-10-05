@@ -409,6 +409,34 @@ def list_answers_for_question(question_id: str):
     r = supabase.table("answers").select("answer_id,preview_url,created_at").eq("question_id", question_id).order("created_at").execute()
     return r.data or []
 
+# === GET: fetch a question by its ID ===
+@app.get("/api/questions/{question_id}")
+def get_question_by_id(question_id: str):
+    """
+    Returns a single question by question_id.
+    Response:
+      { ok: true, question: { question_id, session_id, question_text, order_index, created_at } }
+    404 if not found.
+    """
+    try:
+        res = (
+            supabase.table("questions")
+            .select("question_id, session_id, question_text, order_index, created_at")
+            .eq("question_id", question_id)
+            .execute()
+        )
+        rows = getattr(res, "data", None) or []
+        if not rows:
+            raise HTTPException(status_code=404, detail="Question not found")
+        return {"ok": True, "question": rows[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(
+            {"ok": False, "where": "exception", "error": f"{type(e).__name__}: {e}"},
+            status_code=500,
+        )
+    
 @app.get("/api/answers/{answer_id}")
 def get_answer(answer_id: str):
     r = supabase.table("answers").select("board_json").eq("answer_id", answer_id).execute()
