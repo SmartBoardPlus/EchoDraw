@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { PenLine } from "lucide-react"; // 🖊️ Import the pen icon
+import { useRouter } from "next/navigation";
 
 export default function CardsPage() {
   const [cards, setCards] = useState([
@@ -8,7 +9,8 @@ export default function CardsPage() {
     { id: 2, title: "Card 2", description: "This is the second card." },
     { id: 3, title: "Card 3", description: "This is the third card." },
   ]);
-
+  const [loading, setIsLoading] = useState(false);
+  const router=useRouter();
   const addCard = () => {
     const newId = cards.length + 1;
     const newCard = {
@@ -18,7 +20,11 @@ export default function CardsPage() {
     };
     setCards([...cards, newCard]);
   };
-
+  const handleQuestionClick = (id: number) => {
+    setIsLoading(true);
+    router.push(`/teacherWhiteBoard?SessionId=${id}`);
+    
+  }
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-5 relative">
       <h1 className="text-3xl font-bold text-center text-black mb-8">
@@ -27,16 +33,18 @@ export default function CardsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {cards.map((card) => (
-          <div
+          <button
             key={card.id}
             className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300"
+            onClick={() => handleQuestionClick(card.id)}
+            disabled={loading}
           >
             <div className="h-40 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
               <span className="text-gray-400">Image</span>
             </div>
             <h2 className="text-xl font-semibold mb-2">{card.title}</h2>
             <p className="text-gray-600">{card.description}</p>
-          </div>
+          </button>
         ))}
       </div>
 
