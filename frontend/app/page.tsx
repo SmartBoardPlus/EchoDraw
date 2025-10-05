@@ -143,9 +143,14 @@ function HomePageIntroduction() {
 function HomePageGitHubLink() {
   return (
     <div className="homepage-github justify-center">
-      <p>So what're you waiting for?</p>
-      <p>
-        Check out our <a>GitHub repository</a>{" "}
+      <p className="text-3xl lg:text-3xl !leading-tight mx-[100px] max-w-xl text-center">
+        So what're you waiting for?
+      </p>
+      <p className="text-3xl lg:text-3xl !leading-tight mx-[100px] max-w-xl text-center">
+        Check out our{" "}
+        <a href="https://github.com/SmartBoardPlus/NextJSBoard">
+          GitHub repository
+        </a>{" "}
         <b>
           <u>now!</u>
         </b>
